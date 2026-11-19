@@ -21,3 +21,14 @@ def test_deg_to_sin_cos_known_angles():
     """0 degrees is (0, 1) and 90 degrees is (1, 0)."""
     assert _deg_to_sin_cos(0) == pytest.approx((0, 1))
     assert _deg_to_sin_cos(90) == pytest.approx((1, 0))
+
+def test_deg_to_sin_cos_continuity():
+    """Test that the function is continuous at 360 degrees.359 to 1 degree"""
+    assert _deg_to_sin_cos(359) == pytest.approx(_deg_to_sin_cos(-1))
+    assert _deg_to_sin_cos(360) == pytest.approx(_deg_to_sin_cos(0))
+
+def test_representation_and_string_methods():
+    """Test the __repr__ and __str__ methods of WindSite"""
+    site = WindSite(1)
+    assert repr(site) == f"WindSite(site_index=1, path='{site.path}')"
+    assert str(site) == f"WindSite 1 with data from {site.path}"

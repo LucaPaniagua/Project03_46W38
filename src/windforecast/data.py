@@ -36,6 +36,13 @@ class WindSite:
         """Read the CSV file with the time column as a datetime index"""
         return pd.read_csv(self.path, parse_dates=["Time"], index_col="Time")
 
+    def __repr__(self):
+        return f"WindSite(site_index={self.site_index}, path='{self.path}')"
+
+    def __str__(self):
+        return f"WindSite {self.site_index} with data from {self.path}"
+
+
 def _deg_to_sin_cos(winddirection):
     """convert wind direction from degrees to sine and cosine values
         
@@ -55,4 +62,5 @@ def _deg_to_sin_cos(winddirection):
 
     winddirection_rad = np.deg2rad(winddirection)
     return np.sin(winddirection_rad), np.cos(winddirection_rad)
-    
+
+
