@@ -3,6 +3,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 
 class WindSite:
     """One wind site with it's hourly wind speed data and power data
@@ -18,6 +20,18 @@ class WindSite:
     """
 
     VALID_SITE_INDEX = [1, 2, 3, 4]
+
+    VARIABLE_UNITS = {
+        "temperature_2m": "°F",
+        "relativehumidity_2m": "%",
+        "dewpoint_2m": "°F",
+        "windspeed_10m": "m/s",
+        "windspeed_100m": "m/s",
+        "winddirection_10m": "°",
+        "winddirection_100m": "°",
+        "windgusts_10m": "m/s",
+        "Power": "-",
+    }
 
     def __init__(self, site_index: int, input_dir="inputs"):
         """Initialize the WindSite object with the site index and input
@@ -42,10 +56,46 @@ class WindSite:
     def __str__(self):
         return f"WindSite {self.site_index} with data from {self.path}"
 
+    def plot_variable(self, variable_name, start, end):
+        """Plot a variable from the data between start and end dates
+
+        Parameters
+        ----------
+        variable_name : str
+            Name of the variable to plot
+        start : pd.Timestamp
+            Start date for the plot
+        end : pd.Timestamp
+            End date for the plot
+
+        """
+
+        if variable_name not in self.data.columns:
+            raise ValueError(
+                f"Variable '{variable_name}' not found"
+                f" in data columns: {self.data.columns.tolist()}"
+            )
+
+        plot_data = self.data[variable_name].loc[start:end]
+        fig, ax = plt.subplots(figsize=(12, 6))
+        plot_data.plot(ax=ax)
+        if plot_data.empty:
+            raise ValueError(
+                f"No data available for the specified range:"
+                f" {start} to {end}"
+            )
+        ax.set_xlabel("Time")
+        ax.set_ylabel(
+            f"{variable_name}"
+            f"[{self.VARIABLE_UNITS.get(variable_name, '')}]"
+        )
+        ax.set_title(f"{variable_name} for WindSite {self.site_index}")
+        return fig, ax
+
 
 def _deg_to_sin_cos(winddirection):
     """convert wind direction from degrees to sine and cosine values
-        
+
     Parameters
     ----------
     winddirection : pd.Series
@@ -62,5 +112,3 @@ def _deg_to_sin_cos(winddirection):
 
     winddirection_rad = np.deg2rad(winddirection)
     return np.sin(winddirection_rad), np.cos(winddirection_rad)
-
-
