@@ -2,6 +2,9 @@
 
 from abc import ABC, abstractmethod
 
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+
 
 class ForecastModel(ABC):
     """Evary type of forecasting model need to follow"""
@@ -63,3 +66,31 @@ class PersistenceModel(ForecastModel):
         """
 
         return X["Power"].to_numpy()
+
+
+class LinearRegressionModel(ForecastModel):
+    name = "Linear regression"
+
+    def __init__(self):
+        self.estimator = LinearRegression()
+
+    def fit(self, X_train, y_train):
+        self.estimator.fit(X_train, y_train)
+        return self
+
+    def predict(self, X):
+        return self.estimator.predict(X)
+
+
+class RandomForestModel(ForecastModel):
+    name = "Random forest"
+
+    def __init__(self):
+        self.estimator = RandomForestRegressor(random_state=0, n_jobs=-1)
+
+    def fit(self, X_train, y_train):
+        self.estimator.fit(X_train, y_train)
+        return self
+
+    def predict(self, X):
+        return self.estimator.predict(X)
