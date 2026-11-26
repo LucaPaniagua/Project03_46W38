@@ -92,6 +92,70 @@ class WindSite:
         ax.set_title(f"{variable_name} for WindSite {self.site_index}")
         return fig, ax
 
+    def make_features(self, horizon=1):
+        """Build the features X(t) and the target y = Power(t + horizon).
+
+        Parameters
+        ----------
+        horizon : int, default=1
+            Number of hours ahead to forecast.
+
+        Returns
+        -------
+        X : pd.DataFrame
+            Features available at time t.
+        y : pd.Series
+            Power at time t + horizon.
+        """
+        columns = [
+            "windspeed_10m",
+            "windspeed_100m",
+            "Power",
+        ]
+        X = self.data[columns].copy()
+        sin_dir_100m, cos_dir_100m = _deg_to_sin_cos(
+            self.data["winddirection_100m"]
+        )
+        X["sin_winddirection_100m"] = sin_dir_100m
+        X["cos_winddirection_100m"] = cos_dir_100m
+
+        y = self.data["Power"].shift(-horizon)
+        valid = y.notna()
+        return X[valid], y[valid]
+
+    def train_test_split(
+        self, test_start="2021-01-01", test_end="2021-12-31", horizon=1
+    ):
+        """Split the data into training and testing sets based on the provided
+        date of starr and end date.
+
+        Parameters
+        ----------
+        test_start : str
+            Start date for the test set in 'YYYY-MM-DD' format.
+        test_end : str
+            End date for the test set in 'YYYY-MM-DD' format.
+
+        Returns
+        -------
+        X_train : pd.DataFrame
+            Features for the training set.
+        y_train : pd.Series
+            Target for the training set.
+        X_test : pd.DataFrame
+            Features for the testing set.
+        y_test : pd.Series
+            Target for the testing set.
+        """
+
+        X, y = self.make_features(horizon=horizon)
+        X_train = X[X.index < test_start]
+        y_train = y[y.index < test_start]
+        X_test = X.loc[test_start:test_end]
+        y_test = y.loc[test_start:test_end]
+
+        return X_train, X_test, y_train, y_test
+
 
 def _deg_to_sin_cos(winddirection):
     """convert wind direction from degrees to sine and cosine values

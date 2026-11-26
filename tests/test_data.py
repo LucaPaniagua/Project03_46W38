@@ -59,3 +59,56 @@ def test_plot_variable_invalid_variable_raises():
     site = WindSite(1)
     with pytest.raises(ValueError):
         site.plot_variable("invalid_variable", "2020-01-01", "2020-01-02")
+
+
+def test_make_features_shapes_and_columns():
+    """Test the shapes and columns of the features and target."""
+
+    site = WindSite(1)
+    X, y = site.make_features()
+    assert X.shape == (43799, 5)  # 43800 - 1 for the target
+    assert y.shape == (43799,)
+    assert "winddirection_100m" not in X.columns
+
+
+def test_make_features_target_is_next_hour():
+    """Test that the target is the power of the next hour."""
+
+    site = WindSite(2)
+    X, y = site.make_features()
+    assert y.iloc[0] == site.data["Power"].iloc[1]
+    assert y.iloc[10] == site.data["Power"].iloc[11]
+
+
+def test_make_features_horizon():
+    """Test the horizon parameter of make_features."""
+    site = WindSite(3)
+    X, y = site.make_features(horizon=6)
+    assert len(X) == 43800 - 6
+    assert len(y) == 43800 - 6
+    assert y.iloc[0] == site.data["Power"].iloc[6]
+
+
+def test_split_defaul_sizes():
+    """Test the sizes betwen train and and test"""
+    site = WindSite(3)
+    X_train, X_test, y_train, y_test = site.train_test_split()
+    assert len(X_train) == 35040
+    assert len(X_test) == 8759
+
+
+def test_split_no_future_in_train():
+    """Training data ends before the test period starts (no leakage)"""
+    site = WindSite(3)
+    X_train, X_test, _, _ = site.train_test_split("2021-03-01", "2021-03-31")
+    assert X_train.index.max() < X_test.index.min()
+
+
+def test_split_custom_range_sizes():
+    """One monthrange give 744 test hours"""
+    site = WindSite(3)
+    X_train, X_test, y_train, y_test = site.train_test_split(
+        "2021-03-01", "2021-03-31"
+    )
+    assert len(X_test) == 744
+    assert len(X_train) == 36456
